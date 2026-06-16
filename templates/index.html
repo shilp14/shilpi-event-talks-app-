@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigQuery Release Notes Explorer</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Ambient background glow elements -->
+        <div class="glow-sphere glow-sphere-1"></div>
+        <div class="glow-sphere glow-sphere-2"></div>
+
+        <!-- Sidebar / Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-database"></i>
+                </div>
+                <div class="brand-text">
+                    <h1>BQ Release</h1>
+                    <span>Explorer Studio</span>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Controls</h3>
+                <button id="refresh-btn" class="btn btn-primary btn-full">
+                    <i class="fa-solid fa-arrows-rotate" id="refresh-icon"></i>
+                    <span>Refresh Feed</span>
+                </button>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Filter by Category</h3>
+                <div class="filter-group">
+                    <button class="filter-pill active" data-filter="all">
+                        <span class="pill-dot" style="background: var(--text-muted)"></span>
+                        All Updates
+                    </button>
+                    <button class="filter-pill" data-filter="Feature">
+                        <span class="pill-dot" style="background: var(--accent-feature)"></span>
+                        Features
+                    </button>
+                    <button class="filter-pill" data-filter="Change">
+                        <span class="pill-dot" style="background: var(--accent-change)"></span>
+                        Changes
+                    </button>
+                    <button class="filter-pill" data-filter="Issue">
+                        <span class="pill-dot" style="background: var(--accent-issue)"></span>
+                        Issues
+                    </button>
+                    <button class="filter-pill" data-filter="Deprecation">
+                        <span class="pill-dot" style="background: var(--accent-deprecation)"></span>
+                        Deprecations
+                    </button>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="status-indicator">
+                    <span class="pulse-dot"></span>
+                    <span id="last-updated-text">Updating...</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="top-nav">
+                <div class="page-title">
+                    <h2>Latest Releases</h2>
+                    <p>Track, analyze, and share Google BigQuery updates in real-time.</p>
+                </div>
+                <div class="social-summary">
+                    <div class="metric-card">
+                        <span class="metric-val" id="total-updates-count">0</span>
+                        <span class="metric-label">Total Updates</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-body">
+                <!-- Feed Feed -->
+                <section class="feed-section">
+                    <!-- Skeleton Loader -->
+                    <div id="skeleton-container" class="skeleton-container">
+                        <div class="skeleton-card"></div>
+                        <div class="skeleton-card"></div>
+                        <div class="skeleton-card"></div>
+                    </div>
+
+                    <!-- Error Alert -->
+                    <div id="error-container" class="error-container hidden">
+                        <div class="error-icon">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                        <h3>Failed to retrieve release notes</h3>
+                        <p id="error-message">Connection timed out. Please try again later.</p>
+                        <button id="retry-btn" class="btn btn-secondary">
+                            <i class="fa-solid fa-arrows-rotate"></i> Retry Connection
+                        </button>
+                    </div>
+
+                    <!-- Feed List -->
+                    <div id="feed-list" class="feed-list hidden">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </section>
+
+                <!-- Tweet Studio Panel -->
+                <section class="tweet-section">
+                    <div class="tweet-panel glass-panel">
+                        <div class="panel-header">
+                            <div class="header-title">
+                                <i class="fa-brands fa-x-twitter"></i>
+                                <h3>Tweet Studio</h3>
+                            </div>
+                            <span class="badge">Draft</span>
+                        </div>
+
+                        <div class="panel-body">
+                            <!-- No Selection State -->
+                            <div id="tweet-empty-state" class="tweet-empty-state">
+                                <div class="empty-icon">
+                                    <i class="fa-solid fa-feather-pointed"></i>
+                                </div>
+                                <h4>No Update Selected</h4>
+                                <p>Select any release note card from the feed to compose a tweet about it.</p>
+                            </div>
+
+                            <!-- Editor State -->
+                            <div id="tweet-editor-container" class="tweet-editor-container hidden">
+                                <div class="selected-note-context">
+                                    <span class="note-tag" id="context-tag">Feature</span>
+                                    <span class="note-date" id="context-date">June 15, 2026</span>
+                                </div>
+
+                                <div class="textarea-wrapper">
+                                    <textarea id="tweet-textarea" placeholder="What's happening?"></textarea>
+                                    <div class="textarea-footer">
+                                        <span id="char-counter" class="char-counter">0 / 280</span>
+                                    </div>
+                                </div>
+
+                                <div class="tweet-preview-section">
+                                    <h4>Preview</h4>
+                                    <div class="x-card">
+                                        <div class="x-avatar">
+                                            <i class="fa-solid fa-user-astronaut"></i>
+                                        </div>
+                                        <div class="x-content">
+                                            <div class="x-header">
+                                                <span class="x-name">You</span>
+                                                <span class="x-handle">@username</span>
+                                            </div>
+                                            <p id="tweet-live-preview" class="x-text"></p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button id="tweet-submit-btn" class="btn btn-tweet">
+                                    <i class="fa-brands fa-x-twitter"></i>
+                                    <span>Post to X / Twitter</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast hidden">
+        <i class="fa-solid fa-circle-check toast-icon"></i>
+        <span id="toast-message">Success!</span>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
